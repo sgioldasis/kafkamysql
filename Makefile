@@ -12,11 +12,19 @@ TAG := $(shell git describe --tags --always --dirty)
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+infra-up:
+	@echo "\n${BLUE}Starting the infrastructure...${NC}\n"
+	@docker-compose -f docker-compose.infra.yml up -d
+
+infra-down:
+	@echo "\n${BLUE}Stopping the infrastructure...${NC}\n"
+	@docker-compose -f docker-compose.infra.yml down
+
 run:
 	@python -m $(MODULE)
 
 test:
-	@pytest
+	@export KAFKA_BROKER_URL='localhost:9092' ; pytest
 
 lint:
 	@echo "\n${BLUE}Running Pylint against source and test files...${NC}\n"

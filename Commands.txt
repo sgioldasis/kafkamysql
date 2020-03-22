@@ -1,13 +1,31 @@
-docker-compose up
+Start the infrastructure zookeeper, kafka etc.
+----------------------------------------------
+docker-compose -f docker-compose.infra.yml up -d
 
-docker-compose exec kafka kafka-topics.sh --bootstrap-server localhost:9092 --list
+Run tests
+---------
+make test
+
+
+
+
+
+
+OLD
+---
 
 Terminal 1: (This will run the infrastructure zookeeper, kafka etc.)
 --------------------------------------------------------------------
-docker-compose -f docker-compose.kafka.yml up
+
+#OLD:  docker-compose -f docker-compose.kafka.yml up
+
 
 Terminal 2: (This will run the tests)
 -------------------------------------
-docker-compose up --build
+#OLD:  docker-compose up --build
 
+
+docker-compose up
+
+docker-compose exec kafka kafka-topics.sh --bootstrap-server localhost:9092 --list
 
