@@ -1,4 +1,4 @@
-class Kafkamysql:
+class KafkaMySql:
 
     @staticmethod
     def run():

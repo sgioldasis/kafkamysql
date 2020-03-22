@@ -1,4 +1,4 @@
-from .app import Kafkamysql
+from .app import KafkaMySql
 
 if __name__ == '__main__':
-    Kafkamysql.run()
+    KafkaMySql.run()

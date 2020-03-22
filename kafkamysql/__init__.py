@@ -1,1 +1,1 @@
-from .app import Kafkamysql  # noqa: F401
+from .app import KafkaMySql  # noqa: F401
