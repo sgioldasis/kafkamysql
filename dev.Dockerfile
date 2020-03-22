@@ -9,6 +9,8 @@ COPY requirements.txt /requirements.txt
 RUN /venv/bin/pip install -r /requirements.txt
 
 FROM builder-venv AS tester
+ARG KAFKA_BROKER_URL
+ENV KAFKA_BROKER_URL $KAFKA_BROKER_URL
 
 COPY . /app
 WORKDIR /app
