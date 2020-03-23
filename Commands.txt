@@ -8,6 +8,9 @@ make test
 
 
 
+(kafkamysql) savas@deepin:~/tools/kafka$ bin/kafka-console-consumer.sh -bootstrap-server 15.236.10.119:9092 --topic data --from-beginning
+
+
 
 
 

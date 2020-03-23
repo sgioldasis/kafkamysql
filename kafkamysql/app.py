@@ -3,24 +3,61 @@ from time import sleep
 from confluent_kafka import Consumer, KafkaError
 import json
 import logging
+import pandas as pd
 
-KAFKA_BROKER_URL = os.environ.get('KAFKA_BROKER_URL')
-KAFKA_TOPIC = 'data'
+KAFKA_BROKER_URL = os.environ.get("KAFKA_BROKER_URL")
+KAFKA_TOPIC = "data"
 
 settings = {
-    'bootstrap.servers': KAFKA_BROKER_URL,
-    'group.id': 'my-group',
-    'client.id': 'client-1',
-    'enable.auto.commit': True,
-    'session.timeout.ms': 6000,
-    'default.topic.config': {'auto.offset.reset': 'smallest'}
+    "bootstrap.servers": KAFKA_BROKER_URL,
+    "group.id": "my-group",
+    "client.id": "client-1",
+    "enable.auto.commit": True,
+    "session.timeout.ms": 6000,
+    "default.topic.config": {"auto.offset.reset": "smallest"},
 }
 
+
 class KafkaMySql:
+    @staticmethod
+    def process(a_string):
+        try:
+            # a_json = json.loads(a_string)
+            # logging.info(a_json)
+            # df = pd.DataFrame.from_dict(a_json, orient="index")
+            # df = pd.DataFrame.from_dict([a_json])
+            df = pd.read_json('['+a_string+']', orient='columns') 
+            df['calc'] = df.apply(lambda row: row.created_at.value, axis=1)
+            # df['sqlts'] = df.apply(lambda row: row.created_at.value.dt.round('1U'), axis=1)
+            df['sqlts'] = df['created_at'].values.astype('datetime64[us]')
+            df['sqlts2'] = df['created_at'].dt.round('1U').values.astype('datetime64[us]')
+            df['sqlts3'] = df['created_at'].dt.round('1U').values.astype(str)
+
+            logging.info(df)
+            logging.info(df.dtypes)
+
+            logging.info(df['sqlts'].astype(str).tolist())
+            logging.info(df['sqlts2'].astype(str).tolist())
+            logging.info(df['sqlts3'].astype(str).tolist())
+
+            logging.info(df['created_at'].astype(str).tolist())
+            logging.info(df['created_at'].dt.round('1U').astype(str).tolist())
+            logging.info(df['created_at'].dt.round('1U').tolist())
+            logging.info(df['created_at'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').tolist())
+            logging.info(df['created_at'].view('int64').tolist())
+
+            # creating column list for insertion
+            # cols = "`,`".join([str(i) for i in df.columns.tolist()])
+            # for i,row in df.iterrows():
+            #     logging.warning(f"row[{i}] = "+str(type(row)))
+        except:
+            logging.warning(f"String {a_string} could not be converted to JSON")
+        finally:
+            return a_string
 
     @staticmethod
     def run():
-        logging.warning('KAFKA_BROKER_URL = '+KAFKA_BROKER_URL)
+        logging.info("KAFKA_BROKER_URL = " + KAFKA_BROKER_URL)
 
         consumer = Consumer(settings)
         consumer.subscribe([KAFKA_TOPIC])
@@ -31,16 +68,19 @@ class KafkaMySql:
                 if msg is None:
                     continue
                 elif not msg.error():
-                    msg_data = msg.value().decode('utf-8')
-                    print('msg_data=',msg_data)
-                    logging.warning('msg_data='+msg_data)
-                    if msg_data == 'Quit!':
+                    msg_data = msg.value().decode("utf-8")
+                    print("process(msg_data) = ", KafkaMySql.process(msg_data))
+                    logging.info("msg_data=" + msg_data)
+                    if msg_data == "Quit!":
                         break
                 elif msg.error().code() == KafkaError._PARTITION_EOF:
-                    logging.warning('End of partition reached {0}/{1}'
-                        .format(msg.topic(), msg.partition()))
+                    logging.warning(
+                        "End of partition reached {0}/{1}".format(
+                            msg.topic(), msg.partition()
+                        )
+                    )
                 else:
-                    logging.warning('Error occured: {0}'.format(msg.error().str()))
+                    logging.warning("Error occured: {0}".format(msg.error().str()))
 
         except KeyboardInterrupt:
             pass
