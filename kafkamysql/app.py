@@ -81,8 +81,10 @@ class KafkaMySql:
     def run():
         logging.info("KAFKA_BROKER_URL = " + KAFKA_BROKER_URL)
 
+
         consumer = Consumer(settings)
         consumer.subscribe([KAFKA_TOPIC])
+        print(f"Consuming messages from Kafka [{KAFKA_BROKER_URL}] - topic [{KAFKA_TOPIC}]")
 
         try:
             while True:
