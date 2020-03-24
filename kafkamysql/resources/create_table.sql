@@ -8,5 +8,6 @@ CREATE TABLE `Classifieds` (
     currency            VARCHAR(255),
     payment_type        VARCHAR(255),
     payment_cost        DECIMAL(10,2),
-    created_at_ts       BIGINT
+    created_dt          DATETIME(6),
+    created_ns          SMALLINT
 )

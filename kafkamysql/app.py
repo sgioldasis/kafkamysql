@@ -12,7 +12,7 @@ KAFKA_TOPIC = "data"
 settings = {
     "bootstrap.servers": KAFKA_BROKER_URL,
     "group.id": "my-group",
-    "client.id": "client-1",
+    "client.id": "client-2",
     "enable.auto.commit": True,
     "session.timeout.ms": 6000,
     "default.topic.config": {"auto.offset.reset": "smallest"},
@@ -30,13 +30,19 @@ class KafkaMySql:
         try:
             a_json = json.loads(a_string)
             logging.info(a_json)
+
             # df = pd.DataFrame.from_dict(a_json, orient="index")
             df = pd.DataFrame.from_dict([a_json])
+
             # df = pd.read_json('['+a_string+']', orient='columns') 
 
             # df['calc'] = df['created_at'].values.astype(str)
             calc = df.apply(lambda row: pd.to_datetime(row.created_at), axis=1)
-            df['created_at_ts'] = calc.values.astype('int64')
+
+            # df['created_at_ts'] = calc.values.astype('int64')
+            df['created_dt'] = calc.apply(lambda x: x.replace(nanosecond=0).strftime('%Y-%m-%d %H:%M:%S.%f'))
+            df['created_ns'] = calc.dt.nanosecond.values.astype('int64')
+            # df['created_at_dt'] = created_at_dt.values.astype('str')
 
             # df['sqlts'] = df.apply(lambda row: row.created_at.value.dt.round('1U'), axis=1)
             # df['sqlts'] = df['created_at'].values.astype('datetime64[us]')
@@ -45,6 +51,8 @@ class KafkaMySql:
 
             logging.info(df)
             logging.info(df.dtypes)
+
+            # logging.info(df['created_at_dt'].astype(str).tolist())
 
             # logging.info(df['created_at'].astype(str).tolist())
             # logging.info(df['created_at'].dt.tolist())
