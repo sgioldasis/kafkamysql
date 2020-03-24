@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS `Margins`
-;
+//
+
 
 CREATE TABLE IF NOT EXISTS `Margins` (
     created_hour        DATETIME,
@@ -7,11 +8,11 @@ CREATE TABLE IF NOT EXISTS `Margins` (
     payment_type        VARCHAR(255),
     margin        		DECIMAL(10,2)
 )
-;
+//
 
 
 DROP PROCEDURE IF EXISTS db.sp_Margin
-;
+//
 
 create procedure sp_Margin()
 begin
@@ -29,23 +30,18 @@ begin
 	GROUP BY DATE_FORMAT(created_dt, '%Y-%m-%d %H:00:00'), ad_type , payment_type
 	;	
 end
-;
+//
     
--- CALL sp_Margin()
--- ;
-
 SET GLOBAL event_scheduler = ON
-;
+//
+
+DROP EVENT IF EXISTS event_hourly_margins
+//
 
 CREATE EVENT IF NOT EXISTS event_hourly_margins
-ON SCHEDULE EVERY 1 HOUR
+ON SCHEDULE 
+EVERY 1 HOUR
 STARTS CURRENT_TIMESTAMP
 DO CALL sp_Margin()
-;
 
-SHOW events
-;
-  
-DROP EVENT IF EXISTS event_hourly_margins
-;
      

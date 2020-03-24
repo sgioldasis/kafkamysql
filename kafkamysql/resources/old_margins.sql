@@ -17,22 +17,23 @@ create procedure sp_Margin()
 begin
 	INSERT INTO Margins (created_hour , ad_type , payment_type , margin )
 	SELECT 
-		DATE_FORMAT(created_dt, '%Y-%m-%d %H:00:00') as created_hour ,
+		STR_TO_DATE(CONCAT(SUBSTRING(created_at , 1, 10) , " ", SUBSTRING(created_at , 12, 2), ':00:00') , '%Y-%m-%d %H:00:00') as created_hour ,
 		ad_type , 
 		payment_type , 
 		AVG( (price - payment_cost) * 100 / price ) as margin 
 	FROM Classifieds
 	WHERE 
-		DATE_FORMAT(created_dt, '%Y-%m-%d %H:00:00') > (SELECT IFNULL(max(created_hour),'1000-01-01 00:00:00') FROM Margins) 
+		DATE_FORMAT(CONCAT(SUBSTRING(created_at , 1, 10) , " ", SUBSTRING(created_at , 12, 2), ':00:00') , '%Y-%m-%d %H:00:00') > (SELECT IFNULL(max(created_hour),'1000-01-01 00:00:00') FROM Margins) 
 		AND 
-		DATE_FORMAT(created_dt, '%Y-%m-%d %H:00:00') <= DATE_FORMAT(DATE_SUB(NOW(),INTERVAL 1 HOUR), '%Y-%m-%d %H:00:00')
-	GROUP BY DATE_FORMAT(created_dt, '%Y-%m-%d %H:00:00'), ad_type , payment_type
+		DATE_FORMAT(CONCAT(SUBSTRING(created_at , 1, 10) , " ", SUBSTRING(created_at , 12, 2), ':00:00') , '%Y-%m-%d %H:00:00') <= DATE_FORMAT(DATE_SUB(NOW(),INTERVAL 1 HOUR), '%Y-%m-%d %H:00:00')
+	GROUP BY STR_TO_DATE(CONCAT(SUBSTRING(created_at , 1, 10) , " ", SUBSTRING(created_at , 12, 2), ':00:00') , '%Y-%m-%d %H:00:00'), ad_type , payment_type
 	;	
 end
 ;
     
--- CALL sp_Margin()
--- ;
+
+CALL sp_Margin()
+;
 
 SET GLOBAL event_scheduler = ON
 ;
@@ -49,3 +50,4 @@ SHOW events
 DROP EVENT IF EXISTS event_hourly_margins
 ;
      
+  

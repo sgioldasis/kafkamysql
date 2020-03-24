@@ -11,8 +11,8 @@ KAFKA_TOPIC = "data"
 
 settings = {
     "bootstrap.servers": KAFKA_BROKER_URL,
-    "group.id": "my-group",
-    "client.id": "client-2",
+    "group.id": "my-group-2",
+    "client.id": "client-1",
     "enable.auto.commit": True,
     "session.timeout.ms": 6000,
     "default.topic.config": {"auto.offset.reset": "smallest"},

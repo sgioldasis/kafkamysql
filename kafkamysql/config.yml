@@ -1,6 +1,6 @@
 mysql:
     host: localhost
-    user: user
+    user: root
     passwd: password
     db: db
 other:
