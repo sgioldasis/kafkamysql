@@ -4,6 +4,7 @@ from confluent_kafka import Consumer, KafkaError
 import json
 import logging
 import pandas as pd
+from . import db_utils
 
 KAFKA_BROKER_URL = os.environ.get("KAFKA_BROKER_URL")
 KAFKA_TOPIC = "data"
@@ -17,6 +18,11 @@ settings = {
     "default.topic.config": {"auto.offset.reset": "smallest"},
 }
 
+# Connect to database
+db_connection = db_utils.connect()
+
+# Get a cursor
+db_cursor = db_connection.cursor()
 
 class KafkaMySql:
     @staticmethod
@@ -58,9 +64,12 @@ class KafkaMySql:
 
             # Insert DataFrame recrds one by one.
             for i,row in df.iterrows():
-                sql = "INSERT INTO `Classifieds` (`" +cols + "`) VALUES (" + "%s,"*(len(row)-1) + "%s)"
+                sql = "REPLACE INTO `Classifieds` (`" +cols + "`) VALUES (" + "%s,"*(len(row)-1) + "%s)"
                 logging.info(sql)
                 logging.info(tuple(row))
+                db_cursor.execute(sql, tuple(row))
+                # the connection is not autocommitted by default, so we must commit to save our changes
+                db_connection.commit()
 
         except:
             logging.warning(f"String {a_string} could not be converted to JSON")
@@ -82,10 +91,10 @@ class KafkaMySql:
                     continue
                 elif not msg.error():
                     msg_data = msg.value().decode("utf-8")
-                    print("process(msg_data) = ", KafkaMySql.process(msg_data))
-                    logging.info("msg_data=" + msg_data)
                     if msg_data == "Quit!":
                         break
+                    print("process(msg_data) = ", KafkaMySql.process(msg_data))
+                    logging.info("msg_data=" + msg_data)
                 elif msg.error().code() == KafkaError._PARTITION_EOF:
                     logging.warning(
                         "End of partition reached {0}/{1}".format(

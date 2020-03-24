@@ -1,0 +1,11 @@
+mysql:
+    host: localhost
+    user: user
+    passwd: password
+    db: db
+other:
+    preprocessing_queue:
+        - preprocessing.scale_and_center
+        - preprocessing.dot_reduction
+        - preprocessing.connect_lines
+    use_anonymous: yes
