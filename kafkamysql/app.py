@@ -4,107 +4,125 @@ from confluent_kafka import Consumer, KafkaError
 import json
 import logging
 import pandas as pd
-from . import db_utils
+from . import utils
 
-KAFKA_BROKER_URL = os.environ.get("KAFKA_BROKER_URL")
-KAFKA_TOPIC = "data"
 
-settings = {
-    "bootstrap.servers": KAFKA_BROKER_URL,
-    "group.id": "my-group-2",
-    "client.id": "client-1",
-    "enable.auto.commit": True,
-    "session.timeout.ms": 6000,
-    "default.topic.config": {"auto.offset.reset": "smallest"},
-}
+# Load configuration
+config = utils.load_config()
 
-# Connect to database
-db_connection = db_utils.connect()
+# Connect to Kafka and subscribe to topic
+KAFKA_BROKER_URL = config["kafka"]["broker_url"]
+KAFKA_TOPIC = config["kafka"]["topic"]
+KAFKA_SETTINGS = config["kafka"]["settings"]
 
-# Get a cursor
-db_cursor = db_connection.cursor()
+logging.info("KAFKA_BROKER_URL: " + KAFKA_BROKER_URL)
+logging.info("KAFKA_TOPIC     : " + KAFKA_TOPIC)
+logging.info("KAFKA_SETTINGS  : " + str(KAFKA_SETTINGS))
 
+CONSUMER = Consumer(KAFKA_SETTINGS)
+CONSUMER.subscribe([KAFKA_TOPIC])
+
+# Connect to database and get a cursor
+MYSQL_URL = config["mysql"]["host"] + ":" + str(config["mysql"]["port"])
+MYSQL_DB = config["mysql"]["db"]
+MYSQL_TABLE = config["mysql"]["table"]
+
+logging.info("MYSQL_URL: " + MYSQL_URL)
+logging.info("MYSQL_DB : " + MYSQL_DB)
+
+DB_CONNECTION = utils.connect()
+DB_CURSOR = DB_CONNECTION.cursor()
+
+
+# Main application class
 class KafkaMySql:
     @staticmethod
-    def process(a_string):
+    def db_write(msg_df, msg_string):
         try:
-            a_json = json.loads(a_string)
-            logging.info(a_json)
+            # Create column list for insert statement
+            cols = "`,`".join([str(i) for i in msg_df.columns.tolist()])
+            logging.debug(cols)
 
-            # df = pd.DataFrame.from_dict(a_json, orient="index")
-            df = pd.DataFrame.from_dict([a_json])
+            # Insert (replace duplicates) into database.
+            for i, row in msg_df.iterrows():
+                # Prepare sql statement
+                sql = (
+                    "REPLACE INTO `"
+                    + MYSQL_TABLE
+                    + "` (`"
+                    + cols
+                    + "`) VALUES ("
+                    + "%s," * (len(row) - 1)
+                    + "%s)"
+                )
+                logging.debug(sql)
+                logging.debug(tuple(row))
 
-            # df = pd.read_json('['+a_string+']', orient='columns') 
+                # Execute sql statement providing values
+                DB_CURSOR.execute(sql, tuple(row))
+                # The connection is not autocommitted by default, so we must commit to save our changes
+                DB_CONNECTION.commit()
 
-            # df['calc'] = df['created_at'].values.astype(str)
-            calc = df.apply(lambda row: pd.to_datetime(row.created_at), axis=1)
-
-            # df['created_at_ts'] = calc.values.astype('int64')
-            df['created_dt'] = calc.apply(lambda x: x.replace(nanosecond=0).strftime('%Y-%m-%d %H:%M:%S.%f'))
-            df['created_ns'] = calc.dt.nanosecond.values.astype('int64')
-            # df['created_at_dt'] = created_at_dt.values.astype('str')
-
-            # df['sqlts'] = df.apply(lambda row: row.created_at.value.dt.round('1U'), axis=1)
-            # df['sqlts'] = df['created_at'].values.astype('datetime64[us]')
-            # df['sqlts2'] = df['created_at'].dt.round('1U').values.astype('datetime64[us]')
-            # df['sqlts3'] = df['created_at'].dt.round('1U').values.astype(str)
-
-            logging.info(df)
-            logging.info(df.dtypes)
-
-            # logging.info(df['created_at_dt'].astype(str).tolist())
-
-            # logging.info(df['created_at'].astype(str).tolist())
-            # logging.info(df['created_at'].dt.tolist())
-            # logging.info(df['created_at'].view('int64').tolist())
-
-            # logging.info(df['sqlts'].astype(str).tolist())
-            # logging.info(df['sqlts2'].astype(str).tolist())
-            # logging.info(df['sqlts3'].astype(str).tolist())
-
-            # logging.info(df['created_at'].dt.round('1U').astype(str).tolist())
-            # logging.info(df['created_at'].dt.round('1U').tolist())
-            # logging.info(df['created_at'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').tolist())
-
-            # creating column list for insertion
-            cols = "`,`".join([str(i) for i in df.columns.tolist()])
-            logging.info(cols)
-
-            # Insert DataFrame recrds one by one.
-            for i,row in df.iterrows():
-                sql = "REPLACE INTO `Classifieds` (`" +cols + "`) VALUES (" + "%s,"*(len(row)-1) + "%s)"
-                logging.info(sql)
-                logging.info(tuple(row))
-                db_cursor.execute(sql, tuple(row))
-                # the connection is not autocommitted by default, so we must commit to save our changes
-                db_connection.commit()
+            # Log
+            logging.info(f"Write SUCCESS: [{msg_string}]")
 
         except:
-            logging.warning(f"String {a_string} could not be converted to JSON")
-            
-        finally:
-            return a_string
+            logging.warning(f"Write FAILURE [{msg_string}]")
+
+    @staticmethod
+    def process(msg_string):
+        try:
+            # Load JSON string to dictionary object
+            msg_dict = json.loads(msg_string)
+            logging.debug(msg_dict)
+
+            # Load dictionary object to dataframe
+            msg_df = pd.DataFrame.from_dict([msg_dict])
+
+            # Split created_at into two new columns
+            calc = msg_df.apply(lambda row: pd.to_datetime(row.created_at), axis=1)
+
+            # New column - created_dt: The datetime part up to microseconds (datetime)
+            msg_df["created_dt"] = calc.apply(
+                lambda x: x.replace(nanosecond=0).strftime("%Y-%m-%d %H:%M:%S.%f")
+            )
+
+            # New column - created_ns: The nanoseconds part (integer)
+            msg_df["created_ns"] = calc.dt.nanosecond.values.astype("int64")
+
+            # Log debug
+            logging.info(f"Process SUCCESS: [{msg_string}]")
+            logging.debug(msg_df)
+            logging.debug(msg_df.dtypes)
+
+            # Write to database
+            KafkaMySql.db_write(msg_df, msg_string)
+
+            # Return success
+            return "SUCCESS"
+
+        except:
+            logging.warning(f"Process FAILURE: [{msg_string}]")
+
+            # Return failure
+            return "FAILURE"
 
     @staticmethod
     def run():
-        logging.info("KAFKA_BROKER_URL = " + KAFKA_BROKER_URL)
-
-
-        consumer = Consumer(settings)
-        consumer.subscribe([KAFKA_TOPIC])
-        print(f"Consuming messages from Kafka [{KAFKA_BROKER_URL}] - topic [{KAFKA_TOPIC}]")
+        print(f"Consuming from Kafka [{KAFKA_BROKER_URL}] - topic [{KAFKA_TOPIC}]")
+        print(f"Writing to MySQL host [{MYSQL_URL}] - table [{MYSQL_DB}.{MYSQL_TABLE}]")
 
         try:
             while True:
-                msg = consumer.poll(0.1)
+                msg = CONSUMER.poll(0.1)
                 if msg is None:
                     continue
                 elif not msg.error():
                     msg_data = msg.value().decode("utf-8")
+                    logging.info(f"Message: [{msg_data}]")
                     if msg_data == "Quit!":
                         break
-                    print("process(msg_data) = ", KafkaMySql.process(msg_data))
-                    logging.info("msg_data=" + msg_data)
+                    print(KafkaMySql.process(msg_data), " - ", msg_data)
                 elif msg.error().code() == KafkaError._PARTITION_EOF:
                     logging.warning(
                         "End of partition reached {0}/{1}".format(
@@ -118,4 +136,4 @@ class KafkaMySql:
             pass
 
         finally:
-            consumer.close()
+            CONSUMER.close()
