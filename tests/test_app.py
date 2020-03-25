@@ -57,7 +57,7 @@ def example_data():
 
 def test_app(capsys, example_fixture):
 
-    env='test'
+    env = "test"
     config = utils.load_config(env)
 
     # Create Admin client
@@ -82,16 +82,34 @@ def test_app(capsys, example_fixture):
 
     # Connect to database and get a cursor
     mysql_config = config["mysql"]
-    mysql_connection = utils.connect(mysql_config)
+    db_connection = utils.connect(mysql_config)
     mysql_table = mysql_config["table"]
-    db_cursor = mysql_connection.cursor()
+    db_cursor = db_connection.cursor()
 
-    # List database tables
+    # Check fields
+    from decimal import Decimal
+    import datetime
     id = "d6707ce40a1447baaf012f948fb5b356"
-    db_cursor.execute(f"select count(*) from `{mysql_table}` where id='{id}'")
-    result=db_cursor.fetchone()
-    number_of_rows=result[0]
-    assert number_of_rows == 1
+    db_cursor.execute(f"select * from `{mysql_table}` where id='{id}'")
+    result = db_cursor.fetchall()
+    assert result == [
+        (
+            "d6707ce40a1447baaf012f948fb5b356",
+            "8e0fdcefc3ad45acbb5a2abc506c6c9f",
+            "2019-05-04T23:34:19.5934998Z",
+            "<p>aliquam sed amet dolore consectetuer ut dolore elit dolor euismod elit erat</p>",
+            "Premium",
+            Decimal("29.04"),
+            "EUR",
+            "Card",
+            Decimal("0.17"),
+            datetime.datetime(2019, 5, 4, 23, 34, 19, 593499),
+            800,
+        )
+    ]
 
+    # Close the cursor
+    db_cursor.close()
 
-
+    # Close the connection to database
+    db_connection.close()

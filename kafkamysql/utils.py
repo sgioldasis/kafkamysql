@@ -25,6 +25,7 @@ def connect(config):
         database=config["db"],
         user=config["user"],
         passwd=config["passwd"],
+        allow_local_infile=True
     )
 
     return db_connection

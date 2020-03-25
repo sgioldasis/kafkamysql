@@ -5,6 +5,7 @@ mysql:
     table: Classifieds
     user: root
     passwd: password
+    commit_every: 1
 
 kafka:
     broker_url: localhost:9092

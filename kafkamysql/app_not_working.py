@@ -5,8 +5,11 @@ import logging
 import pandas as pd
 from . import utils
 
+BUFFER = []
+
 # Main application class
 class KafkaMySql:
+    
     @staticmethod
     def init(env):
         # Load configuration
@@ -31,6 +34,7 @@ class KafkaMySql:
         mysql_url = mysql_config["host"] + ":" + str(mysql_config["port"])
         mysql_db = mysql_config["db"]
         mysql_table = mysql_config["table"]
+        mysql_commit_every = mysql_config["commit_every"]
 
         logging.info("mysql_url: " + mysql_url)
         logging.info("mysql_db : " + mysql_db)
@@ -46,46 +50,64 @@ class KafkaMySql:
             db_connection=mysql_connection,
             db_cursor=mysql_cursor,
             db_table=mysql_table,
+            db_commit_every=mysql_commit_every,
         )
 
-    # @staticmethod
-    # def write_db(msg_df, msg_string, conf):
-    #     try:
-    #         msg_df.to_csv('buffered.csv', encoding='utf-8', header = True, doublequote = True, sep=',', index=False)
+    @staticmethod
+    def commit_db(sql, conf):
+        try:
+            # logging.info("**************** Writing to db")
+            # logging.info(BUFFER)
+            print(BUFFER)
+            sys.exit(0)
+
+            # Execute sql statement providing values
+            conf["db_cursor"].executemany(sql, BUFFER)
+
+            # The connection is not autocommitted by default, so we must commit to save our changes
+            conf["db_connection"].commit()
+
+            # Log
+            logging.info(f"Write SUCCESS")
+
+            BUFFER.clear()
+
+        except:
+            logging.warning(f"Write FAILURE")
+
 
     @staticmethod
     def write_db(msg_df, msg_string, msg_num, conf):
-        try:
-            # Create column list for insert statement
-            cols = "`,`".join([str(i) for i in msg_df.columns.tolist()])
-            logging.debug(cols)
+        # Create column list for insert statement
+        cols = "`,`".join([str(i) for i in msg_df.columns.tolist()])
+        logging.debug(cols)
 
-            # Insert (replace duplicates) into database.
-            for i, row in msg_df.iterrows():
-                # Prepare sql statement
-                sql = (
-                    "REPLACE INTO `"
-                    + conf["db_table"]
-                    + "` (`"
-                    + cols
-                    + "`) VALUES ("
-                    + "%s," * (len(row) - 1)
-                    + "%s)"
-                )
-                logging.debug(sql)
-                logging.debug(tuple(row))
+        # Prepare sql statement
+        sql = (
+            "REPLACE INTO `"
+            + conf["db_table"]
+            + "` (`"
+            + cols
+            + "`) VALUES ("
+            + "%s," * (msg_df.shape[1] - 1)
+            + "%s)"
+        )
+        logging.debug(sql)
 
-                # Execute sql statement providing values
-                conf["db_cursor"].execute(sql, tuple(row))
-                # The connection is not autocommitted by default, so we must commit to save our changes
-                # if msg_num % conf["commit_every"] == 0:
-                conf["db_connection"].commit()
+        # Insert (replace duplicates) into database.
+        for i, row in msg_df.iterrows():
+            BUFFER.append(tuple(row))
+            logging.debug(tuple(row))
 
-            # Log
-            logging.info(f"Write SUCCESS: [{msg_string}]")
+        if msg_num % 10 == 0:
+            logging.info("**************** Writing to db, msg_num "+str(msg_num))
+            print("**************** Writing to db, msg_num "+str(msg_num))
+            logging.info(BUFFER)
+            KafkaMySql.commit_db(sql, conf)
+            sys.exit(0)
 
-        except:
-            logging.warning(f"Write FAILURE [{msg_string}]")
+        # Log
+        logging.info(f"Write SUCCESS: [{msg_string}]")
 
     @staticmethod
     def process(msg_string, msg_num, conf):
@@ -114,6 +136,8 @@ class KafkaMySql:
             logging.debug(msg_df.dtypes)
 
             # Write to database
+            # logging.info('**************** msg_num = '+str(msg_num))
+            # logging.warning(conf['db_commit_every'])
             KafkaMySql.write_db(msg_df, msg_string, msg_num, conf)
 
             # Return success
@@ -141,7 +165,7 @@ class KafkaMySql:
                     logging.info(f"Message: [{msg_data}]")
                     if msg_data == "Quit!":
                         break
-                    print(KafkaMySql.process(msg_data, msg_num, conf), " - ", msg_data)
+                    print(str(msg_num), " : ", KafkaMySql.process(msg_data, msg_num, conf), " - ", msg_data)
                 elif msg.error().code() == KafkaError._PARTITION_EOF:
                     logging.warning(
                         "End of partition reached {0}/{1}".format(
