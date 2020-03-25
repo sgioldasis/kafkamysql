@@ -1,5 +1,6 @@
 import os
 from .context import kafkamysql
+from .context import utils
 from confluent_kafka import Producer
 from confluent_kafka.admin import (
     AdminClient,
@@ -56,19 +57,41 @@ def example_data():
 
 def test_app(capsys, example_fixture):
 
-    # Create Admin client
-    a = AdminClient({"bootstrap.servers": KAFKA_BROKER_URL})
-    example_create_topics(a, [KAFKA_TOPIC])
+    env='test'
+    config = utils.load_config(env)
 
-    producer = Producer({"bootstrap.servers": KAFKA_BROKER_URL})
+    # Create Admin client
+    kafka_broker_url = config["kafka"]["broker_url"]
+    kafka_topic = config["kafka"]["topic"]
+    a = AdminClient({"bootstrap.servers": kafka_broker_url})
+    example_create_topics(a, [kafka_topic])
+
+    producer = Producer({"bootstrap.servers": kafka_broker_url})
     producer.produce(KAFKA_TOPIC, key="1", value="Hello, World!")
     producer.produce(KAFKA_TOPIC, key="2", value=example_data())
-    producer.produce(KAFKA_TOPIC, key="3", value="Quit!")
+    producer.produce(KAFKA_TOPIC, key="3", value=example_data())
+    producer.produce(KAFKA_TOPIC, key="4", value="Quit!")
     producer.flush(10)
 
     # pylint: disable=W0612,W0613
-    kafkamysql.KafkaMySql.run(env='test')
+    kafkamysql.KafkaMySql.run(env)
     captured = capsys.readouterr()
 
     assert "Hello, World" in captured.out
     assert "d6707ce40a1447baaf012f948fb5b356" in captured.out
+
+    # Connect to database and get a cursor
+    mysql_config = config["mysql"]
+    mysql_connection = utils.connect(mysql_config)
+    mysql_table = mysql_config["table"]
+    db_cursor = mysql_connection.cursor()
+
+    # List database tables
+    id = "d6707ce40a1447baaf012f948fb5b356"
+    db_cursor.execute(f"select count(*) from `{mysql_table}` where id='{id}'")
+    result=db_cursor.fetchone()
+    number_of_rows=result[0]
+    assert number_of_rows == 1
+
+
+
