@@ -1,7 +1,11 @@
 import utils
 
+# Load configuration
+config = utils.load_config()
+MYSQL_CONFIG = config["mysql"]
+
 # Connect to database
-db_connection = utils.connect()
+db_connection = utils.connect(MYSQL_CONFIG)
 
 # Get a cursor
 db_cursor = db_connection.cursor()

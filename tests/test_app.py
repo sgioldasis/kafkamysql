@@ -67,7 +67,7 @@ def test_app(capsys, example_fixture):
     producer.flush(10)
 
     # pylint: disable=W0612,W0613
-    kafkamysql.KafkaMySql.run()
+    kafkamysql.KafkaMySql.run(env='test')
     captured = capsys.readouterr()
 
     assert "Hello, World" in captured.out
