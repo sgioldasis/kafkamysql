@@ -1,11 +1,9 @@
 import os
-from time import sleep
 from confluent_kafka import Consumer, KafkaError
 import json
 import logging
 import pandas as pd
 from . import utils
-
 
 # Main application class
 class KafkaMySql:
@@ -15,42 +13,40 @@ class KafkaMySql:
         config = utils.load_config(env)
 
         # Connect to Kafka and subscribe to topic
-        KAFKA_BROKER_URL = config["kafka"]["broker_url"]
-        KAFKA_TOPIC = config["kafka"]["topic"]
-        KAFKA_SETTINGS = config["kafka"]["settings"]
+        kafka_broker_url = config["kafka"]["broker_url"]
+        kafka_topic = config["kafka"]["topic"]
+        kafka_settings = config["kafka"]["settings"]
 
-        logging.info("KAFKA_BROKER_URL: " + KAFKA_BROKER_URL)
-        logging.info("KAFKA_TOPIC     : " + KAFKA_TOPIC)
-        logging.info("KAFKA_SETTINGS  : " + str(KAFKA_SETTINGS))
+        logging.info("Kafka broker_url: " + kafka_broker_url)
+        logging.info("Kafka topic     : " + kafka_topic)
+        logging.info("Kafka settings  : " + str(kafka_settings))
 
-        CONSUMER = Consumer(KAFKA_SETTINGS)
-        CONSUMER.subscribe([KAFKA_TOPIC])
+        kafka_consumer = Consumer(kafka_settings)
+        kafka_consumer.subscribe([kafka_topic])
 
-        print(f"Consuming from Kafka [{KAFKA_BROKER_URL}] - topic [{KAFKA_TOPIC}]")
+        print(f"Consuming from Kafka [{kafka_broker_url}] - topic [{kafka_topic}]")
 
         # Connect to database and get a cursor
-        MYSQL_CONFIG = config["mysql"]
-        MYSQL_URL = MYSQL_CONFIG["host"] + ":" + str(MYSQL_CONFIG["port"])
-        MYSQL_DB = MYSQL_CONFIG["db"]
-        MYSQL_TABLE = MYSQL_CONFIG["table"]
+        mysql_config = config["mysql"]
+        mysql_url = mysql_config["host"] + ":" + str(mysql_config["port"])
+        mysql_db = mysql_config["db"]
+        mysql_table = mysql_config["table"]
 
-        logging.info("MYSQL_URL: " + MYSQL_URL)
-        logging.info("MYSQL_DB : " + MYSQL_DB)
+        logging.info("mysql_url: " + mysql_url)
+        logging.info("mysql_db : " + mysql_db)
 
-        DB_CONNECTION = utils.connect(MYSQL_CONFIG)
-        DB_CURSOR = DB_CONNECTION.cursor()
+        mysql_connection = utils.connect(mysql_config)
+        mysql_cursor = mysql_connection.cursor()
 
-        print(f"Writing to MySQL host [{MYSQL_URL}] - table [{MYSQL_DB}.{MYSQL_TABLE}]")
+        print(f"Writing to MySQL host [{mysql_url}] - table [{mysql_db}.{mysql_table}]")
 
-        params = dict(
-            config=config,
-            consumer=CONSUMER,
-            db_connection=DB_CONNECTION,
-            db_cursor=DB_CURSOR,
-            db_table=MYSQL_TABLE,
+        # Return dictionary
+        return dict(
+            kafka_consumer=kafka_consumer,
+            db_connection=mysql_connection,
+            db_cursor=mysql_cursor,
+            db_table=mysql_table,
         )
-
-        return params
 
     @staticmethod
     def write_db(msg_df, msg_string, conf):
@@ -64,7 +60,7 @@ class KafkaMySql:
                 # Prepare sql statement
                 sql = (
                     "REPLACE INTO `"
-                    + conf['db_table']
+                    + conf["db_table"]
                     + "` (`"
                     + cols
                     + "`) VALUES ("
@@ -75,9 +71,9 @@ class KafkaMySql:
                 logging.debug(tuple(row))
 
                 # Execute sql statement providing values
-                conf['db_cursor'].execute(sql, tuple(row))
+                conf["db_cursor"].execute(sql, tuple(row))
                 # The connection is not autocommitted by default, so we must commit to save our changes
-                conf['db_connection'].commit()
+                conf["db_connection"].commit()
 
             # Log
             logging.info(f"Write SUCCESS: [{msg_string}]")
@@ -129,7 +125,7 @@ class KafkaMySql:
 
         try:
             while True:
-                msg = conf['consumer'].poll(0.1)
+                msg = conf["kafka_consumer"].poll(0.1)
                 if msg is None:
                     continue
                 elif not msg.error():
@@ -151,4 +147,4 @@ class KafkaMySql:
             pass
 
         finally:
-            conf['consumer'].close()
+            conf["kafka_consumer"].close()
