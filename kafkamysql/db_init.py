@@ -1,28 +1,50 @@
 import utils
+import argparse
 
-# Load configuration
-config = utils.load_config()
-MYSQL_CONFIG = config["mysql"]
 
-# Connect to database
-db_connection = utils.connect(MYSQL_CONFIG)
+def main(env):
+    # Load configuration
+    config = utils.load_config(env)
+    mysql_config = config["mysql"]
 
-# Get a cursor
-db_cursor = db_connection.cursor()
+    # Print DB info
+    print(f"Environment    : {env}")
+    print(f"MySQL host     : {mysql_config['host']}:{mysql_config['port']}")
+    print(f"MySQL database : {mysql_config['db']}")
 
-# Run multiple statements 
-for statement in utils.get_sql('db_init.sql').split('==='):
-    if len(statement) > 0:
-        print(statement)
-        db_cursor.execute(statement)
+    # Connect to database
+    db_connection = utils.connect(mysql_config)
 
-# List database tables
-db_cursor.execute("SHOW TABLES")
-for table in db_cursor:
-    print(table)
+    # Get a cursor
+    db_cursor = db_connection.cursor()
 
-# Close the cursor
-db_cursor.close()
+    # Run multiple statements
+    for statement in utils.get_sql("db_init.sql").split("==="):
+        if len(statement) > 0:
+            # print(statement)
+            db_cursor.execute(statement)
 
-# Close the connection to database
-db_connection.close()
+    # List database tables
+    db_cursor.execute("SHOW TABLES")
+    for table in db_cursor:
+        print(table)
+
+    # Close the cursor
+    db_cursor.close()
+
+    # Close the connection to database
+    db_connection.close()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Initialize database")
+    parser.add_argument(
+        "env",
+        nargs="?",
+        choices=["test", "prod"],
+        default="test",
+        help="Environment code",
+    )
+    args = parser.parse_args()
+
+    main(args.env)

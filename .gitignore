@@ -111,3 +111,5 @@ config.env
 # .vscode
 .vscode/
 db/
+
+*.prod.yml

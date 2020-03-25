@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS `Classifieds`
+===
+
 CREATE TABLE IF NOT EXISTS `Classifieds` (
     id                  VARCHAR(255)  PRIMARY KEY,
     customer_id         VARCHAR(255), 
@@ -24,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `Margins` (
 )
 ===
 
-DROP PROCEDURE IF EXISTS db.sp_Margin
+DROP PROCEDURE IF EXISTS sp_Margin
 ===
 
 CREATE PROCEDURE sp_Margin()
@@ -53,7 +56,4 @@ ON SCHEDULE
 EVERY 1 HOUR
 STARTS CURRENT_TIMESTAMP
 DO CALL sp_Margin()
-===
-    
-SET GLOBAL event_scheduler = ON
      
