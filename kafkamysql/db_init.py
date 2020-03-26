@@ -41,7 +41,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "env",
         nargs="?",
-        choices=["test", "prod"],
+        choices=["test", "prod", "docker"],
         default="test",
         help="Environment code",
     )

@@ -1,0 +1,23 @@
+mysql:
+    host: db
+    port: 3306
+    db: db
+    table: Classifieds
+    user: root
+    passwd: password
+
+kafka:
+    broker_url: broker:29092
+    topic: data
+    settings:
+        bootstrap.servers: broker:29092
+        group.id: my-group-2
+        client.id: client-1
+        enable.auto.commit: False
+        session.timeout.ms: 6000
+        default.topic.config: 
+            auto.offset.reset: "smallest"
+
+batch:
+    max_records: 2
+    max_seconds: 10

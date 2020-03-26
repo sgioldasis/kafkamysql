@@ -1,20 +1,74 @@
-version: "3"
-
+---
+version: "2"
 services:
-
-  # kafkamysql:
-  #   build: 
-  #     context: .
-  #     dockerfile: dev.Dockerfile
-  #     args:
-  #       - KAFKA_BROKER_URL=broker:9092
-
-  generator:
+  consumer:
     build: .
+    entrypoint: ["make", "test-docker"]
+    hostname: app
+    container_name: app
+    depends_on:
+      - db
+      - broker
     environment:
+      TEST_ENV: docker
       KAFKA_BROKER_URL: broker:9092
 
-networks:
-  default:
-    external:
-      name: kafka-network      
+  zookeeper:
+    image: confluentinc/cp-zookeeper:5.4.1
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    image: confluentinc/cp-server:5.4.1
+    hostname: broker
+    container_name: broker
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: "true"
+      CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
+
+  db:
+    image: mysql:5.7
+    hostname: db
+    container_name: db
+    restart: always
+    environment:
+      MYSQL_DATABASE: "db"
+      # So you don't have to use root, but you can if you like
+      MYSQL_USER: "user"
+      # You can use whatever password you like
+      MYSQL_PASSWORD: "password"
+      # Password for root access
+      MYSQL_ROOT_PASSWORD: "password"
+    ports:
+      # <Port exposed> : < MySQL Port running inside container>
+      - "3306:3306"
+    expose:
+      # Opens port 3306 on the container
+      - "3306"
+#       # Where our data will be persisted
+    # volumes:
+    #   - ./db:/var/lib/mysql
+      # # Names our volume
+# volumes:
+#   my-db:

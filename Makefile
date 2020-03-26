@@ -23,8 +23,19 @@ infra-down:
 run:
 	@python -m $(MODULE)
 
-test:
-	@export KAFKA_BROKER_URL='localhost:9092' ; pytest
+test-dep:
+	@export TEST_ENV='test'; cd kafkamysql ; python db_init.py test ; cd .. ; pytest
+
+sleep:
+	@sleep 20
+
+test: infra-up sleep test-dep infra-down
+
+test-docker:
+	@sleep 20 ; cd kafkamysql ; python db_init.py docker ; cd .. ; pytest
+
+docker-test:
+	@docker-compose up --build --abort-on-container-exit ; docker-compose down
 
 lint:
 	@echo "\n${BLUE}Running Pylint against source and test files...${NC}\n"
