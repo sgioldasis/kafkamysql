@@ -115,3 +115,4 @@ db/
 *.prod.yml
 inserted.txt
 rejected.txt
+warnings.txt

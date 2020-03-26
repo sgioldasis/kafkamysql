@@ -149,22 +149,24 @@ class KafkaMySql:
             msg_dict = json.loads(msg_data)
             # logging.debug(msg_dict)
 
+            # Validate id column
             if msg_dict['id'] is None or len(msg_dict['id']) == 0:
                 raise ValueError("Column 'id' cannot be null")
 
+            # Validate created_at column
             pd.Timestamp(msg_dict['created_at'])
 
             # Append dictionary object to the list
             msg_list.append(msg_dict)
 
+            return 0
+
         except Exception as e:
-            logging.warning(f"Buffer FAILURE: [{msg_data}]")
-            # print(f"Buffer FAILURE: [{msg_data}]")
+            logging.warning(f"Buffer: Validation FAILURE: {e} \nOffending data: \n{msg_data}")
             with open("rejected.txt", "a") as rejected_file:
                 rejected_file.write(msg_data + " --> " + str(e) + "\n")
 
-        finally:
-            return msg_list
+            return 1
 
 
     @staticmethod
@@ -174,6 +176,7 @@ class KafkaMySql:
         msg_num = 0
         start = time.time()
         msg_count = 0
+        rejected_count = 0
         msg_list = []
         msg_last = None
         msg_data = ""
@@ -196,7 +199,7 @@ class KafkaMySql:
                         #     + ", len(msg_list)="
                         #     + str(len(msg_list))
                         # )
-                        print(KafkaMySql.process(msg_list, conf), " - ", msg_num)
+                        print(KafkaMySql.process(msg_list, conf), ": ", msg_num, " - Rejected: ", rejected_count)
                         consumer.commit(message=msg_last, async=False)
                         msg_list.clear()
                         msg_last = None
@@ -214,7 +217,7 @@ class KafkaMySql:
                     msg_num += 1
                     logging.debug(f"Message: [{msg_data}]")
 
-                    KafkaMySql.buffer(msg_data, msg_list)
+                    rejected_count += KafkaMySql.buffer(msg_data, msg_list)
                     msg_last = msg
 
                 elif msg.error().code() == KafkaError._PARTITION_EOF:
