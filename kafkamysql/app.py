@@ -64,67 +64,42 @@ class KafkaMySql:
             msg_df = msg_df.astype(object).where(pd.notnull(msg_df),None)
             table = conf["db_table"]
 
-            # Create column list for insert statement
-            # cols = "`,`".join([str(i) for i in msg_df.columns.tolist()])
+            cols = msg_df.columns.tolist()
+            # logging.debug('---------- cols')
             # logging.debug(cols)
 
-            # Prepare sql statement: Insert (replace duplicates)
-            # sql = (
-            #     "REPLACE INTO `"
-            #     + conf["db_table"]
-            #     + "` (`"
-            #     + cols
-            #     + "`) values ("
-            #     + "%s," * (len(msg_df.columns.tolist()) - 1)
-            #     + "%s)"
-            # )
-            # logging.info(sql)
-
-            # data = []
-            # data = [tuple(None if type(y) == float and np.isnan(y) else y for y in x) for x in msg_df.values]
-            # data = [tuple(None if pd.isnull(y) else y for y in x) for x in msg_df.values]
-
-            # for i, row in msg_df.iterrows():
-            #     logging.info(tuple(row))
-            #     data.append(tuple(row))
-
-            cols = msg_df.columns.tolist()
-            logging.info('---------- cols')
-            logging.info(cols)
-
-            # data = msg_df.values.tolist()
             data = msg_df.to_dict('records')
-            logging.info('---------- data')
-            logging.info(data)
+            # logging.debug('---------- data')
+            # logging.debug(data)
 
             sql = "INSERT IGNORE INTO " + table + " (" + ",".join(cols) + ") values " + ",".join(["(" + ",".join(["%s"] * len(cols)) + ")"] * len(data))
-            logging.info('---------- sql')
-            logging.info(sql)
+            # logging.debug('---------- sql')
+            # logging.debug(sql)
 
             data_values = tuple([row[col] for row in data for col in cols])
-            logging.info('---------- data_values')
-            logging.info(data_values)
+            # logging.debug('---------- data_values')
+            # logging.debug(data_values)
 
             # Execute sql statement providing values
             cursor = conf["db_connection"].cursor()
             cursor.execute(sql, data_values)
 
-
-            logging.info('---------- warnings')
+            # Warnings
+            # logging.debug('---------- warnings')
             warnings = cursor.fetchwarnings()
             if warnings is not None:
                 with open("warnings.txt", "a") as warnings_file:
                     for warning in warnings:
                         warnings_file.write(str(warning) + "\n")
 
-
+            # Close cursor
             cursor.close()
 
             # The connection is not autocommitted by default, so we must commit to save
             conf["db_connection"].commit()
 
             # Log
-            logging.info(f"Write SUCCESS: [{msg_list}]")
+            logging.debug(f"Write SUCCESS: [{msg_list}]")
 
         except Exception as e:
             logging.warning(f"Write FAILURE {msg_list}" + str(e))
@@ -134,26 +109,25 @@ class KafkaMySql:
         try:
 
             # Load dictionary object to dataframe
-            # msg_df = pd.DataFrame.from_dict(msg_list, orient='columns')
-            logging.warning(f"Processing: {msg_list}")
+            # logging.debug(f"Processing: {msg_list}")
             msg_df = pd.DataFrame.from_dict(msg_list, orient="columns")
-            logging.warning(msg_df)
+            # logging.debug(msg_df)
 
             # Split created_at into two new columns
             calc = msg_df.apply(lambda row: pd.to_datetime(row.created_at), axis=1)
 
             # New column - created_dt: The datetime part up to microseconds (datetime)
             msg_df["created_dt"] = calc.apply(
-                lambda x: x.replace(nanosecond=0).strftime("%Y-%m-%d %H:%M:%S.%f")
+                lambda x: x.replace(nanosecond=0).strftime("%Y-%m-%d %H:%M:%S.%f") if pd.notnull(x) else x
             )
 
             # New column - created_ns: The nanoseconds part (integer)
             msg_df["created_ns"] = calc.dt.nanosecond.values.astype("int64")
 
             # Log debug
-            logging.info(f"Process SUCCESS: [{msg_list}]")
-            logging.debug(msg_df)
-            logging.debug(msg_df.dtypes)
+            logging.debug(f"Process SUCCESS: [{msg_list}]")
+            # logging.debug(msg_df)
+            # logging.debug(msg_df.dtypes)
 
             # Write to database
             KafkaMySql.write_db(msg_df, msg_list, conf)
@@ -162,7 +136,7 @@ class KafkaMySql:
             return "SUCCESS"
 
         except Exception as e:
-            logging.warning(f"Process FAILURE: [{msg_list}]")
+            logging.warning(f"Process FAILURE {e} : \n{msg_list}")
             # raise e
 
             # Return failure
@@ -173,19 +147,25 @@ class KafkaMySql:
         try:
             # Load JSON string to dictionary object
             msg_dict = json.loads(msg_data)
-            logging.debug(msg_dict)
+            # logging.debug(msg_dict)
+
+            if msg_dict['id'] is None or len(msg_dict['id']) == 0:
+                raise ValueError("Column 'id' cannot be null")
+
+            pd.Timestamp(msg_dict['created_at'])
 
             # Append dictionary object to the list
             msg_list.append(msg_dict)
 
         except Exception as e:
             logging.warning(f"Buffer FAILURE: [{msg_data}]")
-            print(f"Buffer FAILURE: [{msg_data}]")
+            # print(f"Buffer FAILURE: [{msg_data}]")
             with open("rejected.txt", "a") as rejected_file:
                 rejected_file.write(msg_data + " --> " + str(e) + "\n")
 
         finally:
             return msg_list
+
 
     @staticmethod
     def run(env="dev"):
@@ -210,12 +190,12 @@ class KafkaMySql:
                     or len(msg_list) == conf["max_records"]
                 ):
                     if len(msg_list) > 0:
-                        logging.warning(
-                            "*** Elapsed="
-                            + str(elapsed)
-                            + ", len(msg_list)="
-                            + str(len(msg_list))
-                        )
+                        # logging.debug(
+                        #     "*** Elapsed="
+                        #     + str(elapsed)
+                        #     + ", len(msg_list)="
+                        #     + str(len(msg_list))
+                        # )
                         print(KafkaMySql.process(msg_list, conf), " - ", msg_num)
                         consumer.commit(message=msg_last, async=False)
                         msg_list.clear()
@@ -232,7 +212,7 @@ class KafkaMySql:
                 elif not msg.error():
                     msg_data = msg.value().decode("utf-8")
                     msg_num += 1
-                    logging.info(f"Message: [{msg_data}]")
+                    logging.debug(f"Message: [{msg_data}]")
 
                     KafkaMySql.buffer(msg_data, msg_list)
                     msg_last = msg
