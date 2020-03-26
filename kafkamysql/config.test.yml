@@ -5,7 +5,6 @@ mysql:
     table: Classifieds
     user: root
     passwd: password
-    commit_every: 1
 
 kafka:
     broker_url: localhost:9092
@@ -14,8 +13,11 @@ kafka:
         bootstrap.servers: localhost:9092
         group.id: my-group-2
         client.id: client-1
-        enable.auto.commit: True
+        enable.auto.commit: False
         session.timeout.ms: 6000
         default.topic.config: 
             auto.offset.reset: "smallest"
-    
+
+batch:
+    max_records: 2
+    max_seconds: 10

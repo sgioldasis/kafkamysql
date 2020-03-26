@@ -113,3 +113,5 @@ config.env
 db/
 
 *.prod.yml
+inserted.txt
+rejected.txt

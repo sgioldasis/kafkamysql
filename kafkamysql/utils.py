@@ -28,6 +28,8 @@ def connect(config):
         allow_local_infile=True
     )
 
+    db_connection.get_warnings = True
+
     return db_connection
 
 
