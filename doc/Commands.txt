@@ -1,0 +1,13 @@
+Run tests locally
+-----------------
+make test
+
+Run tests in Docker
+-------------------
+make docker-test
+
+Cleanup
+-------
+docker ps -a
+docker volume list
+docker volume prune
