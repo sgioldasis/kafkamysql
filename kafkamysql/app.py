@@ -88,7 +88,7 @@ class KafkaMySql:
             # logging.debug('---------- warnings')
             warnings = cursor.fetchwarnings()
             if warnings is not None:
-                with open("warnings.txt", "a") as warnings_file:
+                with open("logs/warnings.txt", "a") as warnings_file:
                     for warning in warnings:
                         warnings_file.write(str(warning) + "\n")
 
@@ -163,7 +163,7 @@ class KafkaMySql:
 
         except Exception as e:
             logging.warning(f"Buffer: Validation FAILURE: {e} \nOffending data: \n{msg_data}")
-            with open("rejected.txt", "a") as rejected_file:
+            with open("logs/rejected.txt", "a") as rejected_file:
                 rejected_file.write(msg_data + " --> " + str(e) + "\n")
 
             return 1
