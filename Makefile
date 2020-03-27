@@ -23,6 +23,9 @@ infra-down:
 install:
 	@pip install -r requirements.txt
 
+config:
+	@cp kafkamysql/config.prod.template.yml kafkamysql/config.prod.yml
+
 init-db:
 	@cd kafkamysql ; python db_init.py prod ; cd ..
 

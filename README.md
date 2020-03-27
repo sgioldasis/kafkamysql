@@ -55,7 +55,9 @@ It is recommended to first setup and activate a Python 3.6.8 virtualenv. If you 
 ```shell
 pyenv virtualenv 3.6.8 kmtest
 pyenv local kmtest
+pip install --upgrade pip
 ```
+
 With the above setup, next time you cd to your folder the virtualenv `kmtest` is going to be activated automatically.
 
 After you activate your virtualenv, the next step is to install the Python requirements. To do that you can type the following inside your main project folder:
@@ -67,7 +69,7 @@ make install
 Next, you need to create and fill in a configuration file containing Kafka and MySQL details for production. A template for this configuration file is provided. You first need to copy the template. Type the following inside your main project folder:
 
 ```shell
-cp kafkamysql/config.prod.template.yml kafkamysql/config.prod.yml
+make config
 ```
 
 Then, you can use your favorite editor to edit the `kafkamysql/config.prod.yml` file. You need to replace `<YOUR-MYSQL-HOST>` , `<YOUR-MYSQL-PASSWORD>` and `<YOUR-KAFKA-URL>` by the appropriate values for your system.
