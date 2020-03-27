@@ -104,6 +104,14 @@ make docker-test
 
 The above command will first use Docker Compose to start a dockerized version of the application and a local infrastructure (Zookeeper, Kafka, MySQL), then run the tests and finally stop all the containers. You should see the test output and also a coverage summary.
 
+### Cleaning test files
+
+You can clean _Pytest_ and coverage cache/files by typing the following:
+
+```console
+make clean
+```
+
 ## Running
 
 ### Using Python Interpreter
@@ -116,14 +124,6 @@ make run
 
 You will see program output in your console. Also, you might see some files under `logs` folder. File `rejected.txt` will log rejected messages (if any) and file `warnings.txt` will log MySQL warnings (if any).
 
-
-## Cleaning
-
-Clean _Pytest_ and coverage cache/files:
-
-```console
-make clean
-```
 
 ## Blog Posts - More Information About This Repo
 
