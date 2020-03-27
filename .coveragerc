@@ -1,0 +1,5 @@
+[run]
+omit =
+    kafkamysql/__init__.py
+    kafkamysql/__main__.py
+    kafkamysql/db_init.py
