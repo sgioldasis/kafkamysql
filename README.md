@@ -45,9 +45,8 @@ pip install --upgrade pip
 
 You can find instructions for your system in the links below:
 
-https://docs.docker.com/install/
-
-https://docs.docker.com/compose/install/
+- [Install Docker Engine](https://docs.docker.com/install/)
+- [Install Docker Compose](https://docs.docker.com/compose/install/)
 
 ## Initial Setup
 It is recommended to first setup and activate a Python 3.6.8 virtualenv. If you use `pyenv` you can type the following inside your main project folder (kafkamysql):
