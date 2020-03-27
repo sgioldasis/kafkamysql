@@ -71,7 +71,7 @@ Next, you need to create and fill in a configuration file containing Kafka and M
 make config
 ```
 
-Then, you can use your favorite editor to edit the `kafkamysql/config.prod.yml` file. You need to replace `<YOUR-MYSQL-HOST>` , `<YOUR-MYSQL-PASSWORD>` and `<YOUR-KAFKA-URL>` by the appropriate values for your system.
+Then, you can use your favorite editor to edit the `kafkamysql/config.prod.yml` file. You need to replace `<YOUR-MYSQL-HOST>` , `<YOUR-MYSQL-PASSWORD>` and `<YOUR-KAFKA-URL>` by the appropriate values for your system. You also need to replace `<YOUR-GROUP>` by some text value of your choice.
 
 At this point, you can initialize the database (create tables, stored procedure etc.) by typing the following inside your main project folder:
 
