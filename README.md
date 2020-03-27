@@ -107,9 +107,15 @@ The above command will first use Docker Compose to start a dockerized version of
 ## Running
 
 ### Using Python Interpreter
+
+You can run the program by typing:
+
 ```shell
 make run
 ```
+
+You will see program output in your console. Also, you might see some files under `logs` folder. File `rejected.txt` will log rejected messages (if any) and file `warnings.txt` will log MySQL warnings (if any).
+
 
 ## Cleaning
 
