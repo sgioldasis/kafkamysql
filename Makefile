@@ -30,7 +30,7 @@ test-dep:
 	@export TEST_ENV='test'; cd kafkamysql ; python db_init.py test ; cd .. ; pytest
 
 sleep:
-	@sleep 20
+	@sleep 30
 
 test: infra-up sleep test-dep infra-down
 

@@ -2,30 +2,31 @@
 ![Language](https://img.shields.io/badge/python-v3.6.8-blue)
 ![Author](https://img.shields.io/badge/Made%20By-Savas%20Gioldasis-blue)
 
-This project is a Python Kafka consumer implementation that reads JSON messages from a Kafka topic, transforms them to a corresponding schema and inserts them into a MySQL table. It also creates a MySQL stored procedure which aggregates the ingestion table into a second table and schedules it to run hourly.
+This project is a Python implementation of a Kafka consumer that reads JSON messages from a Kafka topic, transforms them to a corresponding relational schema and inserts them into a MySQL table. It also creates a MySQL stored procedure which aggregates the ingestion table into a second (aggregate) table and schedules the stored procedure to run hourly.
 
 ## Prerequisites
 
 Before you begin, ensure you have met the following requirements:
 <!--- These are just example requirements. Add, duplicate or remove as required --->
 * A `Linux` machine
+* Git
 * Python 3.6.8 (and above)
 * Docker and docker-compose
 
 *Note:* The following instructions are for Ubuntu Linux but should work in any Debian based Linux.
-
-### Install Git
-
-```bash
-sudo apt update
-sudo apt install git
-```
 
 ### Clone this repo
 
 ```bash
 git clone git@github.com:sgioldasis/kafkamysql.git
 cd kafkamysql
+```
+
+### Install Git
+
+```bash
+sudo apt update
+sudo apt install git
 ```
 
 ### Install Python
@@ -37,21 +38,42 @@ Once you have installed Python you also need to install the Python `pip` package
 
 ```bash
 sudo apt install python-pip
-
 pip install --upgrade pip
 ```
 
-### Install Docker
+### Install Docker Engine and Docker Compose
 
+You can find instructions for your system in the links below:
 
+https://docs.docker.com/install/
 
+https://docs.docker.com/compose/install/
 
-## Quick Start
-To use this repository as starter for your project you can run `configure_project.sh` script, which sets up all variables and file names. This way you can avoid configuring and renaming things yourself:
+## Initial Setup
+It is recommended to first setup and activate a Python 3.6.8 virtualenv. If you use `pyenv` you can type the following inside your main project folder (kafkamysql):
 
 ```shell
-./configure_project.sh MODULE="coolproject" REGISTRY="docker.pkg.github.com/martinheinz/repo-name"
+pyenv virtualenv 3.6.8 kmtest
+pyenv local kmtest
 ```
+With the above setup, next time you cd to your folder the virtualenv `kmtest` is going to be activated automatically.
+
+After you activate your virtualenv, the next step is to install the Python requirements. To do that you can type the following inside your main project folder:
+
+```shell
+make install
+```
+
+Next, you need to create and fill in a configuration file containing Kafka and MySQL details for production. A template for this configuration file is provided. You first need to copy the template. Type the following inside your main project folder:
+
+```shell
+cp kafkamysql/config.prod.template.yml kafkamysql/config.prod.yml
+```
+
+Then, you can use your favorite editor to edit the `kafkamysql/config.prod.yml` file. You need to replace `<YOUR-MYSQL-HOST>` , `<YOUR-MYSQL-PASSWORD>` and `<YOUR-KAFKA-URL>` by the appropriate values for your system.
+
+
+
 
 ## Running
 

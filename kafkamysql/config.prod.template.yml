@@ -1,0 +1,23 @@
+mysql:
+    host: <YOUR-MYSQL-HOST>
+    port: 3306
+    db: sgdataengineer
+    table: Classifieds
+    user: root
+    passwd: <YOUR-MYSQL-PASSWORD>
+
+kafka:
+    broker_url: <YOUR-KAFKA-URL>:9092
+    topic: data
+    settings:
+        bootstrap.servers: <YOUR-KAFKA-URL>:9092
+        group.id: my-group
+        client.id: client-1
+        enable.auto.commit: True
+        session.timeout.ms: 6000
+        default.topic.config: 
+            auto.offset.reset: "smallest"
+
+batch:
+    max_records: 100
+    max_seconds: 30    
