@@ -23,6 +23,9 @@ infra-down:
 install:
 	@pip install -r requirements.txt
 
+init-db:
+	@cd kafkamysql ; python db_init.py prod ; cd ..
+
 run:
 	@python -m $(MODULE)
 
