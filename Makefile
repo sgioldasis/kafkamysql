@@ -12,6 +12,8 @@ TAG := $(shell git describe --tags --always --dirty)
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+.PHONY: infra-up infra-down install config init-db run test-dep sleep test test-docker docker-test clean
+
 infra-up:
 	@echo "\n${BLUE}Starting the infrastructure...${NC}\n"
 	@docker-compose -f docker-compose.infra.yml up -d
@@ -45,8 +47,6 @@ test-docker:
 
 docker-test:
 	@docker-compose up --build --abort-on-container-exit ; docker-compose down
-
-.PHONY: clean image-clean build-prod push test
 
 clean:
 	rm -rf .pytest_cache tests/__pycache__ tests/__pytest_cache__ kafkamysql/__pycache__ kafkamysql/__pytest_cache__ .coverage coverage.xml htmlcov

@@ -11,7 +11,7 @@ kafka:
     topic: data
     settings:
         bootstrap.servers: broker:29092
-        group.id: my-group-2
+        group.id: my-group
         client.id: client-1
         enable.auto.commit: False
         session.timeout.ms: 6000
