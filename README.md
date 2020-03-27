@@ -108,7 +108,7 @@ The above command will first use Docker Compose to start a dockerized version of
 
 ### Using Python Interpreter
 ```shell
-~ $ make run
+make run
 ```
 
 ## Cleaning
@@ -116,7 +116,7 @@ The above command will first use Docker Compose to start a dockerized version of
 Clean _Pytest_ and coverage cache/files:
 
 ```console
-~ $ make clean
+make clean
 ```
 
 ## Blog Posts - More Information About This Repo
