@@ -11,6 +11,7 @@ import numpy as np
 class KafkaMySql:
     @staticmethod
     def init(env):
+        """ Initialize connections to Kafka and database """
         # Load configuration
         config = utils.load_config(env)
 
@@ -52,40 +53,37 @@ class KafkaMySql:
             max_seconds=config["batch"]["max_seconds"],
         )
 
-    # @staticmethod
-    # def write_db(msg_df, msg_string, conf):
-    #     try:
-    #         msg_df.to_csv('buffered.csv', encoding='utf-8', header = True, doublequote = True, sep=',', index=False)
-
     @staticmethod
     def write_db(msg_df, msg_list, conf):
+        """ Write a dataframe to the database """
         try:
 
-            msg_df = msg_df.astype(object).where(pd.notnull(msg_df),None)
+            # Replace null values with None
+            msg_df = msg_df.astype(object).where(pd.notnull(msg_df), None)
+
+            # Get table, columns and data
             table = conf["db_table"]
-
             cols = msg_df.columns.tolist()
-            # logging.debug('---------- cols')
-            # logging.debug(cols)
+            data = msg_df.to_dict("records")
 
-            data = msg_df.to_dict('records')
-            # logging.debug('---------- data')
-            # logging.debug(data)
+            # SQL Insert statement
+            sql = (
+                "INSERT IGNORE INTO "
+                + table
+                + " ("
+                + ",".join(cols)
+                + ") values "
+                + ",".join(["(" + ",".join(["%s"] * len(cols)) + ")"] * len(data))
+            )
 
-            sql = "INSERT IGNORE INTO " + table + " (" + ",".join(cols) + ") values " + ",".join(["(" + ",".join(["%s"] * len(cols)) + ")"] * len(data))
-            # logging.debug('---------- sql')
-            # logging.debug(sql)
-
+            # Values for SQL statement
             data_values = tuple([row[col] for row in data for col in cols])
-            # logging.debug('---------- data_values')
-            # logging.debug(data_values)
 
             # Execute sql statement providing values
             cursor = conf["db_connection"].cursor()
             cursor.execute(sql, data_values)
 
             # Warnings
-            # logging.debug('---------- warnings')
             warnings = cursor.fetchwarnings()
             if warnings is not None:
                 with open("logs/warnings.txt", "a") as warnings_file:
@@ -106,19 +104,20 @@ class KafkaMySql:
 
     @staticmethod
     def process(msg_list, conf):
+        """ Convert a list of messages to dataframe and calculate new columns """
         try:
 
             # Load dictionary object to dataframe
-            # logging.debug(f"Processing: {msg_list}")
             msg_df = pd.DataFrame.from_dict(msg_list, orient="columns")
-            # logging.debug(msg_df)
 
             # Split created_at into two new columns
             calc = msg_df.apply(lambda row: pd.to_datetime(row.created_at), axis=1)
 
             # New column - created_dt: The datetime part up to microseconds (datetime)
             msg_df["created_dt"] = calc.apply(
-                lambda x: x.replace(nanosecond=0).strftime("%Y-%m-%d %H:%M:%S.%f") if pd.notnull(x) else x
+                lambda x: x.replace(nanosecond=0).strftime("%Y-%m-%d %H:%M:%S.%f")
+                if pd.notnull(x)
+                else x
             )
 
             # New column - created_ns: The nanoseconds part (integer)
@@ -126,8 +125,6 @@ class KafkaMySql:
 
             # Log debug
             logging.debug(f"Process SUCCESS: [{msg_list}]")
-            # logging.debug(msg_df)
-            # logging.debug(msg_df.dtypes)
 
             # Write to database
             KafkaMySql.write_db(msg_df, msg_list, conf)
@@ -137,24 +134,23 @@ class KafkaMySql:
 
         except Exception as e:
             logging.warning(f"Process FAILURE {e} : \n{msg_list}")
-            # raise e
 
             # Return failure
             return "FAILURE"
 
     @staticmethod
     def buffer(msg_data, msg_list):
+        """ Buffer individual messages into list """
         try:
             # Load JSON string to dictionary object
             msg_dict = json.loads(msg_data)
-            # logging.debug(msg_dict)
 
             # Validate id column
-            if msg_dict['id'] is None or len(msg_dict['id']) == 0:
+            if msg_dict["id"] is None or len(msg_dict["id"]) == 0:
                 raise ValueError("Column 'id' cannot be null")
 
             # Validate created_at column
-            pd.Timestamp(msg_dict['created_at'])
+            pd.Timestamp(msg_dict["created_at"])
 
             # Append dictionary object to the list
             msg_list.append(msg_dict)
@@ -162,15 +158,19 @@ class KafkaMySql:
             return 0
 
         except Exception as e:
-            logging.warning(f"Buffer: Validation FAILURE: {e} \nOffending data: \n{msg_data}")
+            logging.warning(
+                f"Buffer: Validation FAILURE: {e} \nOffending data: \n{msg_data}"
+            )
             with open("logs/rejected.txt", "a") as rejected_file:
                 rejected_file.write(msg_data + " --> " + str(e) + "\n")
 
             return 1
 
-
     @staticmethod
     def run(env="dev"):
+        """ Main consumer function """
+
+        # Initialization
         conf = KafkaMySql.init(env)
         consumer = conf["kafka_consumer"]
         msg_num = 0
@@ -181,6 +181,7 @@ class KafkaMySql:
         msg_last = None
         msg_data = ""
 
+        # Main consumer loop
         try:
 
             while True:
@@ -193,13 +194,13 @@ class KafkaMySql:
                     or len(msg_list) == conf["max_records"]
                 ):
                     if len(msg_list) > 0:
-                        # logging.debug(
-                        #     "*** Elapsed="
-                        #     + str(elapsed)
-                        #     + ", len(msg_list)="
-                        #     + str(len(msg_list))
-                        # )
-                        print(KafkaMySql.process(msg_list, conf), ": ", msg_num, " - Rejected: ", rejected_count)
+                        print(
+                            KafkaMySql.process(msg_list, conf),
+                            ": ",
+                            msg_num,
+                            " - Rejected: ",
+                            rejected_count,
+                        )
                         consumer.commit(message=msg_last, async=False)
                         msg_list.clear()
                         msg_last = None
