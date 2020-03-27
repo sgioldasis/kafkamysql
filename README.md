@@ -85,7 +85,7 @@ You can also type the above command whenever you want to re-initialize the datab
 
 ### Using Python Interpreter
 
-You can run the tests using your local Python by typing:
+You can run the tests using your local Python interpreter by typing:
 
 ```shell
 make test
