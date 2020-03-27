@@ -121,7 +121,7 @@ You can run the program by typing:
 make run
 ```
 
-You will see program output in your console. Also, you might see some files under `logs` folder. File `rejected.txt` will log rejected messages (if any) and file `warnings.txt` will log MySQL warnings (if any).
+You will see program output in your console. Also, you might see some files under `logs` folder. File `rejected.txt` will log rejected messages (if any) and file `warnings.txt` will log MySQL warnings (if any). The program will keep running until you press `Ctrl-C` in which case it will exit.
 
 
 ## Blog Posts - More Information About This Repo
