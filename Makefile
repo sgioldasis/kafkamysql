@@ -49,4 +49,4 @@ docker-test:
 	@docker-compose up --build --abort-on-container-exit ; docker-compose down
 
 clean:
-	rm -rf .pytest_cache tests/__pycache__ tests/__pytest_cache__ kafkamysql/__pycache__ kafkamysql/__pytest_cache__ .coverage coverage.xml htmlcov
+	@rm -rf .pytest_cache tests/__pycache__ tests/__pytest_cache__ kafkamysql/__pycache__ kafkamysql/__pytest_cache__ .coverage coverage.xml htmlcov
