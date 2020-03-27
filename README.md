@@ -91,7 +91,7 @@ You can run the tests using your local Python by typing:
 make test
 ```
 
-The above command will first use Docker Compose to start a local infrastructure (Zookeeper, Kafka, MySQL), then run the tests and finally stop the local infrastructure. You should see the test output and also a coverage summary. After you run the test you can also open `htmlcov/index.html` to see a detailed coverage html report in your browser.
+The above command will first use Docker Compose to start a local infrastructure (Zookeeper, Kafka, MySQL), then run the tests using your local Python interpreter and finally stop the local docker infrastructure. You should see in your terminal the test output and also a coverage summary. After you run the test you can also open `htmlcov/index.html` to see a detailed coverage html report in your browser.
 
 ### Using Docker
 
