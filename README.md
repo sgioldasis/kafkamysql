@@ -108,7 +108,7 @@ The above command will first use Docker Compose to start a dockerized version of
 
 You can clean _Pytest_ and coverage cache/files by typing the following:
 
-```console
+```shell
 make clean
 ```
 
