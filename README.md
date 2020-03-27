@@ -102,7 +102,7 @@ You can run also the tests using Docker by typing:
 make docker-test
 ```
 
-The above command will first use Docker Compose to start a dockerized version of the application and a local infrastructure (Zookeeper, Kafka, MySQL), then run the tests and finally stop all the containers. You should see the test output and also a coverage summary. After you run the test you can also open `htmlcov/index.html` to see a detailed coverage html report in your browser.
+The above command will first use Docker Compose to start a dockerized version of the application and a local infrastructure (Zookeeper, Kafka, MySQL), then run the tests and finally stop all the containers. You should see the test output and also a coverage summary.
 
 ## Running
 
