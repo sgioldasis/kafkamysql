@@ -1,17 +1,50 @@
-# Blueprint/Boilerplate For Python Projects
+# Kafka to MySQL
+![Language](https://img.shields.io/badge/python-v3.6.8-blue)
+![Author](https://img.shields.io/badge/Made%20By-Savas%20Gioldasis-blue)
 
-[![Build, Test and Lint Action](https://github.com/MartinHeinz/python-project-blueprint/workflows/Build,%20Test,%20Lint/badge.svg)](https://github.com/MartinHeinz/python-project-blueprint/workflows/Build,%20Test,%20Lint/badge.svg)
-[![Push Action](https://github.com/MartinHeinz/python-project-blueprint/workflows/Push/badge.svg)](https://github.com/https://github.com/MartinHeinz/python-project-blueprint/workflows/Push/badge.svg)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/05c44c881bc10a706cbc/test_coverage)](https://codeclimate.com/github/MartinHeinz/python-project-blueprint/test_coverage)
-[![Maintainability](https://api.codeclimate.com/v1/badges/05c44c881bc10a706cbc/maintainability)](https://codeclimate.com/github/MartinHeinz/python-project-blueprint/maintainability)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=MartinHeinz_python-project-blueprint&metric=alert_status)](https://sonarcloud.io/dashboard?id=MartinHeinz_python-project-blueprint)
+This project is a Python Kafka consumer implementation that reads JSON messages from a Kafka topic, transforms them to a corresponding schema and inserts them into a MySQL table. It also creates a MySQL stored procedure which aggregates the ingestion table into a second table and schedules it to run hourly.
 
-## Blog Posts - More Information About This Repo
+## Prerequisites
 
-You can find more information about this project/repository and how to use it in following blog post:
+Before you begin, ensure you have met the following requirements:
+<!--- These are just example requirements. Add, duplicate or remove as required --->
+* A `Linux` machine
+* Python 3.6.8 (and above)
+* Docker and docker-compose
 
-- [Ultimate Setup for Your Next Python Project](https://towardsdatascience.com/ultimate-setup-for-your-next-python-project-179bda8a7c2c)
-- [Automating Every Aspect of Your Python Project](https://towardsdatascience.com/automating-every-aspect-of-your-python-project-6517336af9da)
+*Note:* The following instructions are for Ubuntu Linux but should work in any Debian based Linux.
+
+### Install Git
+
+```bash
+sudo apt update
+sudo apt install git
+```
+
+### Clone this repo
+
+```bash
+git clone git@github.com:sgioldasis/kafkamysql.git
+cd kafkamysql
+```
+
+### Install Python
+
+You can follow any method appropriate for your system to install Python 3.6.8. Using a Python virtual environment is recommended. If your system already has another python version you can follow the link to install
+[multiple python versions with pyenv](https://realpython.com/intro-to-pyenv/)
+
+Once you have installed Python you also need to install the Python `pip` package manager. For example you can run the following commands:
+
+```bash
+sudo apt install python-pip
+
+pip install --upgrade pip
+```
+
+### Install Docker
+
+
+
 
 ## Quick Start
 To use this repository as starter for your project you can run `configure_project.sh` script, which sets up all variables and file names. This way you can avoid configuring and renaming things yourself:
@@ -102,8 +135,9 @@ Token is needed for example for _GitHub Package Registry_. To create one:
     - _Name_: _name that will be accessible in GitHub Actions as `secrets.NAME`_
     - _Value_: _value_
 
-### Resources
-- <https://realpython.com/python-application-layouts/>
-- <https://dev.to/codemouse92/dead-simple-python-project-structure-and-imports-38c6>
-- <https://github.com/navdeep-G/samplemod/blob/master/setup.py>
-- <https://github.com/GoogleContainerTools/distroless/blob/master/examples/python3/Dockerfile>
+## Blog Posts - More Information About This Repo
+
+You can find more information about the template used to setup this project/repository and how to use it in following blog posts:
+
+- [Ultimate Setup for Your Next Python Project](https://towardsdatascience.com/ultimate-setup-for-your-next-python-project-179bda8a7c2c)
+- [Automating Every Aspect of Your Python Project](https://towardsdatascience.com/automating-every-aspect-of-your-python-project-6517336af9da)

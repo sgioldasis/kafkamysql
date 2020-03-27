@@ -20,6 +20,9 @@ infra-down:
 	@echo "\n${BLUE}Stopping the infrastructure...${NC}\n"
 	@docker-compose -f docker-compose.infra.yml down
 
+install:
+	@pip install -r requirements.txt
+
 run:
 	@python -m $(MODULE)
 
