@@ -96,7 +96,7 @@ version:
 .PHONY: clean image-clean build-prod push test
 
 clean:
-	rm -rf .pytest_cache .coverage .pytest_cache coverage.xml
+	rm -rf .pytest_cache kafkamysql/__pycache__ kafkamysql/__pytest_cache__ .coverage coverage.xml htmlcov
 
 docker-clean:
 	@docker system prune -f --filter "label=name=$(MODULE)"
